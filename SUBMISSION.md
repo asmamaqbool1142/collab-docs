@@ -2,7 +2,7 @@
 
 | Item | Location |
 |---|---|
-| **Live product URL** | <PASTE DEPLOYED URL HERE> |
+| **Live product URL** | <PASTE DEPLOYED URL HERE> (see the hosting note below) |
 | **Walkthrough video** | `VIDEO_URL.txt` |
 | Source code | `backend/` (Express API + SQLite), `frontend/` (React + TipTap) |
 | Setup & run instructions | `README.md` |
@@ -11,6 +11,14 @@
 | Automated tests | `backend/test/api.test.js` (run with `npm test`) |
 | Screenshots | `docs/screenshots/` |
 | Deployment config | `Dockerfile`, `render.yaml` |
+
+## Hosting note (live demo)
+
+The live demo runs on Render's **free plan** so reviewers don't need to pay for anything.
+- **First load can take ~50 seconds.** The service sleeps when idle.
+- **Documents may reset** if the service restarts or redeploys, because the free plan has no persistent disk. Demo accounts always exist.
+- **Within a review session everything persists normally,** including across page refreshes. That is enough to test editing, sharing and import end to end.
+- Persistence across restarts works locally and on any host with a persistent volume (see README → Deployment).
 
 ## Test accounts (for the sharing flow)
 

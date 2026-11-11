@@ -67,7 +67,11 @@ API-level integration tests (`backend/test/api.test.js`, Node's built-in test ru
 
 The app ships as a single Docker image: the frontend is built into static files that Express serves next to the API.
 
-- **Render (blueprint included):** push to GitHub, then Render → *New* → *Blueprint* → select the repo. `render.yaml` sets up the Docker web service and a 1 GB persistent disk at `/data` for SQLite.
+- **Render (live demo, free plan):** Render → *New* → *Web Service* (or *Blueprint* using `render.yaml`) → select the repo → runtime **Docker**, instance **Free**, health check `/api/health`, env `DATABASE_PATH=/data/docs.db`.
+  - **Free-plan caveats:**
+    - There is no persistent disk, so documents reset when the service restarts or redeploys. The demo users are re-seeded automatically.
+    - The service sleeps after ~15 minutes idle, so the first request can take about 50 seconds.
+  - **For durable data:** use a paid instance with a disk mounted at `/data` (see the commented block in `render.yaml`).
 - **Any Docker host** (Fly.io, Railway, a VM):
   ```bash
   docker build -t docs-app .
