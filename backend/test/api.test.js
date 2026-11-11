@@ -1,25 +1,44 @@
-import { test, describe, beforeEach } from 'node:test';
+import { test, describe, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import request from 'supertest';
-import { createDb, SEED_PASSWORD } from '../src/db.js';
+import { initDb, SEED_PASSWORD } from '../src/db.js';
+import { createLocalDb } from '../src/db-local.js';
 import { createApp } from '../src/app.js';
 
 let app;
+let db;
 
 async function login(email) {
   const res = await request(app).post('/api/auth/login').send({ email, password: SEED_PASSWORD }).expect(200);
   return { Authorization: `Bearer ${res.body.token}` };
 }
 
-beforeEach(() => {
-  app = createApp(createDb(':memory:'));
+// Each test gets a fresh in-memory Postgres (PGlite), so tests run real SQL with no shared state.
+beforeEach(async () => {
+  db = await initDb(await createLocalDb());
+  app = createApp(db);
+});
+
+afterEach(async () => {
+  await db.close();
 });
 
 describe('auth', () => {
   test('rejects wrong password and unauthenticated requests', async () => {
     await request(app).post('/api/auth/login').send({ email: 'alice@example.com', password: 'nope' }).expect(401);
     await request(app).get('/api/documents').expect(401);
+  });
+});
+
+describe('routing', () => {
+  test('Netlify function paths map to the same API routes; email login is case-insensitive', async () => {
+    const res = await request(app)
+      .post('/.netlify/functions/api/auth/login')
+      .send({ email: '  ALICE@Example.com ', password: SEED_PASSWORD })
+      .expect(200);
+    assert.equal(res.body.user.email, 'alice@example.com');
+    await request(app).get('/.netlify/functions/api/documents').set({ Authorization: `Bearer ${res.body.token}` }).expect(200);
   });
 });
 

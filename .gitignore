@@ -1,6 +1,6 @@
 node_modules/
 frontend/dist/
 backend/data/
-*.db
-*.db-*
+netlify/functions/
+.netlify/
 .env

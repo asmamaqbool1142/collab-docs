@@ -43,10 +43,10 @@ This applies to both:
 
 The application uses a lightweight architecture:
 
-- One backend process.
-- One SQLite database file.
-- One Docker image.
-- No external database or authentication provider required.
+- One Express app, run as a normal Node server locally and as a single Netlify Function in production.
+- One PostgreSQL schema: Supabase in production, embedded PGlite locally (no database install needed).
+- No external authentication provider required.
+- Free hosting (Netlify + Supabase), with no card required for the author or reviewers.
 
 This keeps local setup straightforward and makes deployment easier.
 
@@ -87,23 +87,29 @@ HTML storage is suitable for the current editing and import requirements, but is
 
 If collaborative editing becomes a requirement, I would move toward a ProseMirror JSON or Y.js-based document model with CRDT synchronization.
 
-### 2.3 Database: SQLite with better-sqlite3
+### 2.3 Database: PostgreSQL (Supabase) with PGlite for local and tests
 
-**Decision:** Use SQLite through `better-sqlite3`.
+**Decision:** Use PostgreSQL. Production uses a managed Supabase database. Local development and tests use **PGlite**, the Postgres engine compiled to WebAssembly and running inside the Node process.
 
-**Why SQLite?**
+**Why PostgreSQL?**
 
-- Transactional database operations.
-- Foreign-key support.
-- `ON DELETE CASCADE` automatically cleans up associated sharing records.
-- No separate database server to configure.
-- Suitable for a lightweight, single-instance deployment.
+- Transactional database operations and foreign keys.
+- `ON DELETE CASCADE` automatically cleans up associated sharing and session records.
+- Supabase's free tier gives a persistent, managed database without a credit card.
+- Serverless functions have no persistent disk, so the database must live outside the app.
 
-The SQL remains relatively straightforward, making a future migration to PostgreSQL manageable.
+**Why PGlite locally?**
+
+- Reviewers can run the project with `npm start` and no database installation.
+- Tests run the exact same SQL as production against a real Postgres engine, with a fresh in-memory instance per test and no mocks.
+
+All database access goes through a small `query(text, params)` interface (`backend/src/db.js`), so the app code is identical for Supabase and PGlite.
+
+**History:** the first version used SQLite. I moved to Postgres when deploying, because the free hosts that keep a persistent disk required card verification, and serverless hosting needs an external database.
 
 **Trade-off:**
 
-SQLite is appropriate for the current deployment scope, but a multi-instance deployment and horizontal scaling would require a different database architecture.
+There is a network round trip to the database on every request, and free Supabase projects pause after about a week of inactivity. In return, data is durable and the app can scale horizontally without changing the storage layer.
 
 ### 2.4 Document Sharing and Permissions
 
@@ -180,7 +186,7 @@ File Upload → Format Detection → HTML Conversion → Sanitization → New Do
 Additional safeguards:
 
 - In-memory file handling.
-- 5 MB upload limit.
+- 4 MB upload limit. Netlify Functions accept about 6 MB per request, and file uploads arrive base64-encoded (+33%).
 - File-extension allow-list.
 - Centralized HTML sanitization.
 
@@ -206,6 +212,17 @@ This is acceptable for the assessment scope, but simultaneous editing by multipl
 
 Optimistic locking is a planned improvement.
 
+### 2.8 Deployment: Netlify + Supabase
+
+**Decision:** Host the static React build on Netlify and run the Express API as a single Netlify Function. Store data in Supabase Postgres.
+
+- The Express app is wrapped with `serverless-http`. A small middleware maps `/.netlify/functions/api/*` back to `/api/*`, so routes are identical everywhere.
+- esbuild bundles the function into one self-contained file during the Netlify build (`npm run build:netlify`).
+- The Supabase connection uses the transaction pooler with prepared statements disabled, which suits short-lived serverless connections.
+- Tables and demo users are created automatically on first start, so there is no manual database setup.
+
+**Trade-off:** serverless functions add cold-start latency, and the 4 MB upload limit comes from Netlify's request size cap. Both are acceptable for this scope.
+
 ---
 
 ## 3. Testing Strategy
@@ -216,7 +233,7 @@ The `createApp(db)` function accepts a database instance as a parameter.
 
 This allows each test to:
 
-- Create a fresh in-memory SQLite database.
+- Create a fresh in-memory Postgres database (PGlite).
 - Run requests through the actual HTTP application.
 - Verify real API behavior.
 - Avoid dependencies on a shared test database.
@@ -230,6 +247,8 @@ Testing focuses on the highest-risk areas:
 - Document-sharing lifecycle.
 
 Additionally, I used Playwright with Headless Chrome during development to verify the complete two-user workflow.
+
+For deployment, I bundled the Netlify Function exactly as the build does, ran it from an empty folder (no `node_modules`) against a networked Postgres server, and sent Netlify-style events. This covered login, sharing, permission errors, a base64-encoded `.docx` upload and the upload size limit.
 
 The browser automation script was temporary and was not committed to the repository to keep the project dependencies lightweight.
 
@@ -248,7 +267,7 @@ The following improvements were identified during development.
 | User management | No registration or password recovery. | Add sign-up and password-reset workflows. |
 | Document sharing | Only registered users can receive access. | Add pending invitations for unregistered email addresses. |
 | File management | Import is supported, but export and attachments are not. | Add document export and attachment support. |
-| Database scaling | SQLite supports the current single-instance deployment. | Migrate to PostgreSQL when multi-instance deployment or horizontal scaling is required. |
+| Free-tier hosting | Function cold starts add a few seconds after idle time, and Supabase pauses free projects after about 7 days without activity. | Use a paid tier or a scheduled keep-alive for a production deployment. |
 
 ---
 
@@ -260,7 +279,7 @@ Each major decision was made according to the current product requirements:
 
 - TipTap provides a reliable rich-text editing experience.
 - HTML provides a practical storage format for editing and document imports.
-- SQLite keeps deployment lightweight.
+- PostgreSQL (Supabase in production, PGlite locally) gives durable data with zero local setup.
 - Server-side authorization protects document access.
 - Centralized sanitization reduces XSS risks.
 - Controlled autosaving protects user changes.

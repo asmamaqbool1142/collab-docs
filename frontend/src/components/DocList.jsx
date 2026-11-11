@@ -57,7 +57,7 @@ export default function DocList() {
         <button className="btn-primary" onClick={create} disabled={busy}>+ New document</button>
         <button className="btn" onClick={() => fileRef.current.click()} disabled={busy}>⤒ Import file</button>
         <input ref={fileRef} type="file" accept={ACCEPTED} hidden onChange={onFile} />
-        <span className="muted small">Import supports .txt, .md and .docx (max 5 MB) — creates a new editable document.</span>
+        <span className="muted small">Import supports .txt, .md and .docx (max 4 MB) — creates a new editable document.</span>
       </div>
       {error && <div className="error" role="alert">{error}</div>}
       {!docs ? (

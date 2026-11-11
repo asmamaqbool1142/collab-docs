@@ -4,21 +4,20 @@
 |---|---|
 | **Live product URL** | <PASTE DEPLOYED URL HERE> (see the hosting note below) |
 | **Walkthrough video** | `VIDEO_URL.txt` |
-| Source code | `backend/` (Express API + SQLite), `frontend/` (React + TipTap) |
+| Source code | `backend/` (Express API + PostgreSQL), `frontend/` (React + TipTap) |
 | Setup & run instructions | `README.md` |
 | Architecture note | `ARCHITECTURE.md` |
 | AI workflow note | `AI_WORKFLOW.md` |
 | Automated tests | `backend/test/api.test.js` (run with `npm test`) |
 | Screenshots | `docs/screenshots/` |
-| Deployment config | `Dockerfile`, `render.yaml` |
+| Deployment config | `netlify.toml` (Netlify + Supabase); steps in README → Deployment |
 
 ## Hosting note (live demo)
 
-The live demo runs on Render's **free plan** so reviewers don't need to pay for anything.
-- **First load can take ~50 seconds.** The service sleeps when idle.
-- **Documents may reset** if the service restarts or redeploys, because the free plan has no persistent disk. Demo accounts always exist.
-- **Within a review session everything persists normally,** including across page refreshes. That is enough to test editing, sharing and import end to end.
-- Persistence across restarts works locally and on any host with a persistent volume (see README → Deployment).
+The live demo runs on **Netlify** (frontend + API function) with a **Supabase Postgres** database. Both are on free plans, so nobody pays for anything.
+- Data is stored permanently in Supabase. Documents and shares survive refreshes, redeploys and restarts.
+- The first request after idle time can take a few seconds while the function cold-starts.
+- Supabase pauses free projects after about 7 days of inactivity. If the app reports that the database is unavailable, the project needs to be resumed from the Supabase dashboard.
 
 ## Test accounts (for the sharing flow)
 
