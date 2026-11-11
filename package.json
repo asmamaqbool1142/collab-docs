@@ -1,0 +1,14 @@
+{
+  "name": "docs-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Lightweight collaborative document editor: rich text, file import, sharing.",
+  "scripts": {
+    "install:all": "npm --prefix backend ci && npm --prefix frontend ci",
+    "build": "npm --prefix frontend run build",
+    "start": "npm --prefix backend start",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "test": "npm --prefix backend test"
+  }
+}

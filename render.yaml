@@ -1,0 +1,14 @@
+# One-click deploy: Render dashboard → New → Blueprint → point at this repo.
+services:
+  - type: web
+    name: docs-app
+    runtime: docker
+    plan: starter            # persistent disks require a paid instance
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_PATH
+        value: /data/docs.db
+    disk:
+      name: docs-data
+      mountPath: /data
+      sizeGB: 1
