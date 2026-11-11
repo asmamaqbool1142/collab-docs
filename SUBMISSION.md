@@ -2,7 +2,7 @@
 
 | Item | Location |
 |---|---|
-| **Live product URL** | <PASTE DEPLOYED URL HERE> (see the hosting note below) |
+| **Live product URL** | https://fastidious-starship-027a64.netlify.app (see the hosting note below) |
 | **Walkthrough video** | `VIDEO_URL.txt` |
 | Source code | `backend/` (Express API + PostgreSQL), `frontend/` (React + TipTap) |
 | Setup & run instructions | `README.md` |

@@ -91,7 +91,7 @@ How it fits together:
 - The first API request after idle time can take a few seconds (function cold start).
 - Supabase pauses free projects after about 7 days without activity. Resume it from the Supabase dashboard if that happens.
 
-**Live URL:** _see SUBMISSION.md_
+**Live URL:** https://fastidious-starship-027a64.netlify.app
 
 ## Status
 
